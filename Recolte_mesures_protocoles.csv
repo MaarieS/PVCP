@@ -1,0 +1,10 @@
+Groupe de test;Numéro de tour;Apex entrée;Apex sortie;Sortie de virage entrée;Sortie de virage sortie;Ligne droite entrée;Ligne droite sortie;
+Test 1 A;Tour 1;0;2.3;0;2.1;0;2.1;
+Test 1 A;Tour 2;0;2.3;0;2.006;0;2.006;
+Test 1 B;Tour 1;0;3;0;2.0008;0;2.0008;
+Test 1 B;Tour 2;0;2;0;2;0;2;
+Test 1 C;Tour 1;0;2;0;4;0;4;
+Test 1 C;Tour 2;0;2;0;3;0;3;
+Test 2 A;Tour 1;0;2;0;1;0;1;
+Test 2 B;Tour 1;0;2;0;1.777;0;1.777;
+Test 2 C;Tour 1;0;2;0;3;0;3;
