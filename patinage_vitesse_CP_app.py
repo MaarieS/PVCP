@@ -45,8 +45,8 @@ def display_fall_statistics(bdd):
         # Créer un graphique à barres pour le nombre de chutes par pays
         plt.figure(figsize=(10, 8))
         sns.barplot(x='Number of Falls', y='Country', data=fall_counts, palette='viridis')
-        plt.title('Nombre de Chutes par Pays')
-        plt.xlabel('Nombre de Chutes')
+        plt.title('Nombre de chutes par pays au cours des deux saisons de compétitions internationales 2022/2023 - 2021/2022')
+        plt.xlabel('Nombre de chutes')
         plt.ylabel('Pays')
         st.pyplot(plt)
 
@@ -210,9 +210,11 @@ def page_statistiques(df=None):
 # =============================================================================
 # METHODES PAGE MESURES ANALYSES: 
 # =============================================================================
+
 def get_t_value(degrees_of_freedom, confidence_level=0.95):
     # Calculer la valeur t pour le niveau de confiance donné et les ddl
     return t.ppf((1 + confidence_level) / 2, degrees_of_freedom)
+
 
 # Les calculs de reproductibilité et répétabilité :
 def calculer_repetabilite(data):
@@ -232,48 +234,20 @@ def calculer_repetabilite(data):
 
     return mean_data, S, Sbarre, U
 
-def charger_donnees1(fichier):
-        try:
-            data = pd.read_csv(fichier, delimiter=';', decimal=",", encoding='utf-8')
-        except UnicodeDecodeError:
-            data = pd.read_csv(fichier, delimiter=';', decimal=",", encoding='latin1')
-        # Nettoyage des colonnes pour s'assurer que toutes les données sont des flottants ou des NaN
-        for col in data.columns:
-        # Vérifie si la colonne doit être convertie en numérique ou si elle contient des strings
-            if data[col].dtype == object:
-                try:
-                    data[col] = pd.to_numeric(data[col].str.replace(',', '.').str.strip(), errors='coerce')
-                except:
-                    continue  # La colonne est textuelle et ne sera pas convertie
 
-        return data
-    
 def calculer_reproductibilite(*datasets):
-        # Nombre de séries de mesures par différentes personnes
-        p = len(datasets)
-        n = len(datasets[0]) # Supposons que toutes les séries ont la même longueur
-        
-        # Calcul des moyennes pour chaque série de mesures
-        means = np.array([np.mean(data) for data in datasets])
-        mean_all = np.mean(means)
-        
-        # Calcul des écarts types pour chaque série de mesures
-        std_devs = np.array([np.std(data, ddof=1) for data in datasets])
-        
-        # Calcul de l'écart-type de répétabilité (Sr) pour une seule série (si applicable)
-        Sr = np.sqrt(np.sum(std_devs**2) / p)
-        
-        # Variance inter-individuelle (entre différentes personnes)
-        variance_inter = np.var(means, ddof=1)
-        
-        # Calcul de SR (écart-type de reproductibilité entre différentes personnes)
-        SR = np.sqrt(variance_inter + ((n-1) / n) * Sr**2)
-        
-        # Incertitude élargie
-        k = 2.571  # Facteur de couverture pour 95% de confiance avec p-1 degrés de liberté
-        U = k * SR
-        
-        return means, mean_all, Sr, SR, variance_inter, U
+    p = len(datasets)
+    n = len(datasets[0])
+    means = np.array([np.mean(data) for data in datasets])
+    mean_all = np.mean(means)
+    std_devs = np.array([np.std(data, ddof=1) for data in datasets])
+    Sr = np.sqrt(np.sum(std_devs**2) / p)
+    variance_inter = np.var(means, ddof=1)
+    SR = np.sqrt(variance_inter + ((n-1) / n) * Sr**2)
+    k = 2.571
+    U = k * SR
+    return means, mean_all, Sr, SR, variance_inter, U
+
 
 def plot_density(data1, data2, label1, label2, title):
     plt.figure(figsize=(10, 6))
@@ -367,6 +341,7 @@ def nettoyer_donnees(bdd_vitesse):
     bdd_vitesse = bdd_vitesse.dropna(subset=['Trajectoire'])
     return bdd_vitesse
 
+
 # =============================================================================
 # PAGE: Mesures et analyses
 # =============================================================================
@@ -445,7 +420,8 @@ def page_mesures_analyses():
         choix_course = st.selectbox('Choisissez une course:', loaded_datasets[0].columns)
         if choix_course:
             afficher_resultats(choix_competition, choix_course, loaded_datasets, dataset_names, selected_for_repro, selected_for_repe)
- 
+
+
 
 # =============================================================================
 # METHODES PAGE VALIDATION KINOVEA: 
@@ -553,17 +529,6 @@ def generer_statistiques_par_trajectoire(bdd_vitesse, erreur_cols, unit):
                 stats[col, traj] = [data.mean(), data.std()]
     return stats
 
-# def generer_statistiques_par_zone_selectionnee(bdd_vitesse, erreur_cols_kmh, erreur_cols_pct, unit):
-#     zones = bdd_vitesse['Zone'].unique()
-#     erreur_cols = erreur_cols_kmh if unit == 'km/h' else erreur_cols_pct
-#     stats = pd.DataFrame(index=pd.MultiIndex.from_product([zones, ['mean', 'std']]), columns=erreur_cols)
-#     for col in erreur_cols:
-#         for zone in zones:
-#             data = bdd_vitesse[bdd_vitesse['Zone'] == zone][col].dropna()
-#             if not data.empty:
-#                 stats.loc[(zone, 'mean'), col] = data.mean()
-#                 stats.loc[(zone, 'std'), col] = data.std()
-#     return stats
 
 def generer_boxplots_par_zone(bdd_vitesse, erreur_cols, unit):
     plt.figure(figsize=(14, 10))
@@ -671,7 +636,6 @@ def generer_explanation_scatter(bdd_vitesse, vitesse_cols):
                 - **Erreur Quadratique Moyenne (EQM) :** {mse:.2f}
                 - **Coefficient de Détermination (R²) :** {r2:.2f}
             """)
-
 
 def analyser_erreurs_par_zone(erreurs_stats_zone, unit):
 
@@ -823,7 +787,6 @@ def generer_statistiques_graphiques(bdd_vitesse):
         - **Chute en Sortie de Virage** : Utiliser **m1 camLD** pour les trajectoires courbes. Alternative avec ligne : **m1 camLD ligne**. Utiliser **m2 camLD** pour les trajectoires rectilignes.
         """)
                 
-
         # st.write("## Violin plots des erreurs par trajectoire")
         # unit_violin_plot = st.radio('Sélectionnez l\'unité pour les violin plots', ['km/h', '%'], key='violin_plot')
         # erreur_cols_violin_plot = erreur_cols_kmh if unit_violin_plot == 'km/h' else erreur_cols_pct
@@ -923,32 +886,6 @@ def analyse_repetabilite(bdd_vitesse):
     styled_df = df.style.apply(lambda x: x.map(lambda v: apply_color(v, x.name)), axis=0)
     st.dataframe(styled_df)
 
-
-# Étape 1 : Préparation des données
-# def preparer_donnees_anova_moyennes(bdd_vitesse):
-#     anova_data = pd.DataFrame()
-
-#     methodes = ['m1 camLD', 'm1 camV', 'm2 camLD', 'm2 camV']
-
-#     # Calculer les moyennes pour chaque méthode
-#     for methode in methodes:
-#         moyenne_vitesses = (bdd_vitesse[f'Kinovéa1 {methode}'] + bdd_vitesse[f'Kinovéa2 {methode}']) / 2
-#         temp_df = pd.DataFrame({
-#             'Vitesse': moyenne_vitesses,
-#             'Méthode': methode,
-#             'Sujet': bdd_vitesse.index
-#         })
-#         anova_data = pd.concat([anova_data, temp_df])
-
-#     # Ajouter les valeurs de référence (vitesses capteurs)
-#     reference_data = pd.DataFrame({
-#         'Vitesse': bdd_vitesse['Vitesse capteurs'],
-#         'Méthode': 'Référence',
-#         'Sujet': bdd_vitesse.index
-#     })
-#     anova_data = pd.concat([anova_data, reference_data])
-
-#     return anova_data.dropna()
 
 def preparer_donnees_anova_moyennes(bdd_vitesse):
     anova_data = pd.DataFrame()
@@ -1321,60 +1258,6 @@ def page_validation_kinovea():
 
         conclusion_test_post_hoc_vitesse()
 
-        # anova_data1 = preparer_donnees_anova_repetee(bdd_vitesse)
-        # anova_results = effectuer_anova_repetee(anova_data1)
-
-        # st.subheader("But de l'analyse ANOVA")
-        # st.markdown("""
-        # L'intérêt de réaliser une ANOVA dans ce contexte est de déterminer si les différentes méthodes de mesure produisent des résultats qui diffèrent de manière significative les uns des autres. En identifiant des différences significatives, vous pouvez conclure avec certitude que certaines méthodes sont peut-être plus fiables ou précises que d'autres.
-        # """)
-        # # Expliquer les colonnes du tableau ANOVA
-        # st.markdown("""
-        # - **C(Méthode)**: La variance entre les groupes, c'est-à-dire la variance due aux différences entre les différentes méthodes de mesure comparées.
-        # - **Residual**: La variance résiduelle ou variance à l'intérieur des groupes. Cela correspond à la somme des carrés des résidus, c'est-à-dire à la variabilité non expliquée par les différences entre les méthodes.
-        # - **DF**: Degrés de liberté associés à la source de variation.
-        # - **sum_sq**: Somme des carrés due à chaque source de variation.
-        # - **mean_sq**: Moyenne des carrés, obtenue en divisant la somme des carrés par les degrés de liberté.
-        # - **F**: Statistique F, calculée en divisant la moyenne des carrés entre les groupes par la moyenne des carrés à l'intérieur des groupes.
-        # - **PR(>F)**: P-value associée au test statistique F, indiquant la probabilité de voir de telles données si les moyennes de toutes les méthodes étaient identiques.
-        # """)
-
-        # st.header("ANOVA sur les vitesses des méthodes sans les méthodes lignes")
-        # st.subheader("Données après agrégation")
-        # st.write(anova_data1)
-
-
-        # st.subheader("Résultats de l'ANOVA à mesures répétées")
-        # st.write(anova_results.anova_table)  # Affiche le tableau ANOVA
-        # st.text(anova_results.summary())  # Affiche un résumé des résultats
-
-        # # Interprétation des résultats
-        # if anova_results.anova_table['Pr > F'][0] < 0.05:
-        #     st.success("Les résultats indiquent une différence statistiquement significative entre les méthodes, suggérant que certaines méthodes peuvent être plus fiables ou précises que d'autres.")
-        # else:
-        #     st.error("Aucune différence significative n'a été trouvée entre les méthodes.")
-
-
-
-        # st.header("ANOVA sur les vitesses des 6 méthodes")
-
-        # # Debug: Vérification des données d'entrée
-        # st.write("Affichage des premières lignes de bdd_vitesse")
-        # st.write(bdd_vitesse.head())
-
-        # anova_data1 = preparer_donnees_anova_vitesses(bdd_vitesse)
-
-        # # Debug: Vérification des données ANOVA préparées
-        # st.write("Données ANOVA")
-        # st.write(anova_data1.head())
-
-        # anova_table1 = effectuer_anova_vitesses(anova_data1)
-
-        # # Debug: Vérification du tableau ANOVA
-        # st.write("Tableau ANOVA")
-        # st.write(anova_table1)
-
-
 
         # Ce que j'avais fait avant avec que les erreurs et pas les vitesses donc j'avais pas de groupe référence pour comparer 
         # Car la comparaison avec le groupe ref s'était faite plus tôt pendant le calcul de l'erreur sur Excel
@@ -1420,7 +1303,6 @@ def page_validation_kinovea():
             conclusion_test_post_hoc()
 
 
-
     with tab3:
         st.header("Analyse de la répétabilité des méthodes")
         analyse_repetabilite(bdd_vitesse)
@@ -1428,6 +1310,642 @@ def page_validation_kinovea():
 
     with tab4:
         conclusion_generale()
+
+
+
+# =============================================================================
+# METHODES PAGE MESURES ET ANALYSES APRES ETUDE : 
+# =============================================================================
+
+
+def get_t_value(degrees_of_freedom, confidence_level=0.95):
+    return t.ppf((1 + confidence_level) / 2, degrees_of_freedom)
+
+def calculer_repetabilite_mesures_analyses(data):
+    if len(data) < 2:
+        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan  # Retourne des NaN pour toutes les valeurs
+    
+    mean_speed = np.nanmean(data)
+    S = np.nanstd(data, ddof=1)
+    Sbarre = S / np.sqrt(len(data) - np.isnan(data).sum())
+    df = len(data) - np.isnan(data).sum() - 1
+
+    if df > 0:
+        t_value = get_t_value(df)
+        U = t_value * Sbarre
+    else:
+        t_value, U = np.nan, np.nan
+
+    return mean_speed, S, Sbarre, U, df, t_value
+
+# Afficher un graphique de répétabilité
+def plot_repeatability(data_dict):
+    fig, ax = plt.subplots()
+    for observer, data in data_dict.items():
+        mean_speed, S, Sbarre, U, df, t_value = calculer_repetabilite_mesures_analyses(data)
+        color = 'green' if U < 5 else 'red'  # Seuil d'incertitude pour la couleur
+        ax.bar(observer, mean_speed, yerr=S, color=color, label=f'U={U:.2f}')
+    plt.ylabel('Moyenne des vitesses (km/h)')
+    plt.title('Répétabilité par observateur et course')
+    plt.legend()
+    st.pyplot(fig)
+
+
+
+def calculer_reproductibilite_approximee(*datasets):
+    valid_data = [data for data in datasets if len(data) > 1]
+    single_measure_datasets = [data for data in datasets if len(data) == 1]
+
+    all_means = [np.nanmean(data) for data in valid_data] + [data[0] for data in single_measure_datasets]
+    mean_all = np.nanmean(all_means)
+
+    if valid_data:
+        std_devs = [np.nanstd(data, ddof=1) for data in valid_data]
+        Sr = np.sqrt(np.nanmean([s**2 for s in std_devs]))
+        mean_std_dev = np.nanmean(std_devs) if std_devs else np.nan
+    else:
+        mean_std_dev, Sr = np.nan, np.nan
+
+    estimated_std_devs = [mean_std_dev] * len(single_measure_datasets)
+    variance_inter = np.var(all_means, ddof=1)
+    n_min = min([len(data) for data in datasets])
+    SR = np.sqrt(variance_inter + ((n_min - 1) / n_min) * Sr**2)
+    U = 2.571 * SR
+
+    return mean_all, Sr, SR, variance_inter, U
+
+def charger_et_nettoyer_donnees_mesures_analyses(fichier):
+    try:
+        data = pd.read_csv(fichier, delimiter=';', encoding='utf-8')
+    except UnicodeDecodeError:
+        data = pd.read_csv(fichier, delimiter=';', encoding='latin1')
+    data.replace(to_replace=r',', value='.', regex=True, inplace=True)
+    cols_vitesse = [col for col in data.columns if 'Impact speed' in col]
+    for col in cols_vitesse:
+        data[col] = pd.to_numeric(data[col], errors='coerce')
+    data.dropna(subset=cols_vitesse, how='all', inplace=True)
+    return data
+
+
+def filtrer_et_afficher_donnees(data):
+    # Filtrer les données pour inclure les lignes où au moins une colonne 'Impact speed' est non nulle
+    cols_a_verifier = [col for col in data.columns if 'Impact speed' in col]
+    data_filtrée = data.dropna(subset=cols_a_verifier, how='all')
+    
+    # Colonnes à afficher
+    colonnes_affichage = [
+        'Competition Name', 'City', 'Race', 'Year', 'Head area',
+        *cols_a_verifier
+    ]
+    # Afficher le tableau filtré
+    return data_filtrée[colonnes_affichage]
+
+
+def evaluer_ecarts_significatifs(data, seuil=10):
+    # Résultats pour les courses avec écarts significatifs
+    resultats_significatifs = {}
+
+    # Itérer sur chaque course et observer
+    for index, row in data.iterrows():
+        course = row['Race']
+        marie_vitesse = row['Impact speed Marie m1'] if 'Impact speed Marie m1' in row and pd.notna(row['Impact speed Marie m1']) else None
+        if marie_vitesse is None:
+            continue  # Passer si Marie n'a pas de mesure
+
+        # Calculer la moyenne des autres observateurs présents
+        autres_vitesses = []
+        for obs in ['Laurianne', 'Lisa']:
+            for i in range(1, 4):  # Supposer jusqu'à trois mesures
+                key = f'Impact speed {obs} m{i}'
+                if key in row and pd.notna(row[key]):
+                    autres_vitesses.append(row[key])
+
+        if not autres_vitesses:
+            continue  # Passer si aucun autre observateur n'a de mesure
+
+        moyenne_autres = np.mean(autres_vitesses)
+        ecart = abs(marie_vitesse - moyenne_autres)
+
+        # Vérifier si l'écart est supérieur au seuil
+        if ecart > seuil:
+            resultats_significatifs[course] = {
+                'Vitesse Unique Marie': marie_vitesse,
+                'Moyenne des Autres': moyenne_autres,
+                'Ecart': ecart,
+                'Est Proche': ecart < moyenne_autres * 0.1
+            }
+
+    return resultats_significatifs
+
+# Vous pouvez utiliser cette fonction après avoir chargé et préparé vos données.
+
+def afficher_resultats_evaluation(resultats):
+    # Assumons que `resultats` est un DataFrame avec les colonnes nécessaires
+    courses = resultats['Race'].unique()
+    fig, axs = plt.subplots(len(courses), 1, figsize=(10, 5 * len(courses)))
+    
+    if len(courses) == 1:
+        axs = [axs]  # Assurez-vous que axs est toujours une liste pour la cohérence
+
+    for ax, course in zip(axs, courses):
+        data_course = resultats[resultats['Race'] == course]
+        distances = data_course['Distance à la Moyenne']
+        est_proche = data_course['Est Proche']
+        labels = [f"{obs}" for obs in data_course['Observateur']]
+        
+        # Utiliser une couleur différente en fonction de la proximité
+        colors = ['green' if proche else 'red' for proche in est_proche]
+        
+        ax.bar(labels, distances, color=colors)
+        ax.set_title(f'Race: {course}')
+        ax.set_ylabel('Distance à la moyenne (km/h)')
+        ax.set_xlabel('Observateur')
+        ax.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+def page_mesures_analyses_apres_etude():
+    st.title("Mesures et analyses")
+    st.write("## Comment ont été fait les calculs ?")
+    st.write("Analyse de vidéos sur Kinovéa")
+
+    data = charger_et_nettoyer_donnees_mesures_analyses('Falls data and analysis v2.csv')
+    data['Competition_Combined'] = data['Competition Name'] + ' ' + data['City'] + ' ' + data['Year'].astype(str)
+    competitions = data['Competition_Combined'].unique()
+
+
+    choix_competition = st.selectbox('Choisissez une compétition:', competitions)
+    filtered_data = data[data['Competition_Combined'] == choix_competition]
+    races = filtered_data['Race'].unique()
+    choix_course = st.selectbox('Choisissez une course:', races)
+    selected_data = filtered_data[filtered_data['Race'] == choix_course]
+    observateurs = ['Marie', 'Laurianne', 'Lisa']
+
+    selected_for_repe = st.multiselect('Choisissez les observateurs pour la répétabilité:', observateurs, default=observateurs)
+    if selected_for_repe:
+        results_repe = afficher_resultats_repe(selected_data, selected_for_repe)
+        st.write("### Résultats de répétabilité")
+        for observer, res in results_repe.items():
+            st.write(f"**{observer}:**")
+            st.write(f"Moyenne des vitesses: {res['Moyenne des vitesses']:.2f} km/h")
+            st.write(f"Écart type: {res['Écart type']:.2f}")
+            st.write(f"Erreur standard de la moyenne: {res['Erreur standard de la moyenne']:.2f}")
+            st.write(f"U (Incertitude avec facteur de couverture t): {res['U (Incertitude avec facteur de couverture t)']:.2f} km/h")
+
+    tableau_filtre = filtrer_et_afficher_donnees(data)
+    st.write(tableau_filtre)
+    st.write("Nombre de vitesses d'impact mesurées :")
+    st.write(len(tableau_filtre))
+
+    # Regrouper les données par observateur et par course
+    grouped_data = {}
+    for observer in ['Marie', 'Laurianne', 'Lisa']:
+        observer_data = data[[col for col in data.columns if observer in col]].dropna()
+        grouped_data[observer] = observer_data.values.flatten()  # Créer un array plat de toutes les mesures
+
+    
+    # Préparation des données pour le graphique de répétabilité et pour le tableau
+    results = {obs: {'Mean Speed': [], 'Uncertainty': []} for obs in observateurs}
+    course_labels = []  # Liste pour les noms de course
+    mauvaises_repe = []  # Pour stocker les mauvaises répétabilités
+
+    for race in races:
+        course_data = filtered_data[filtered_data['Race'] == race]
+        course_labels.append(race)  # Ajouter le nom de la course à la liste
+        for observer in observateurs:
+            # Chercher toutes les colonnes qui correspondent à cet observateur
+            obs_data = [course_data[f'Impact speed {observer} m{i}'] for i in range(1, 4) if f'Impact speed {observer} m{i}' in course_data.columns]
+            # Combiner toutes les valeurs non nulles
+            speeds = pd.concat(obs_data).dropna().values
+            if len(speeds) > 0:
+                mean_speed, S, Sbarre, U, df, t_value = calculer_repetabilite_mesures_analyses(speeds)
+                results[observer]['Mean Speed'].append(mean_speed)
+                results[observer]['Uncertainty'].append(U)
+
+                # Vérification des mauvaises répétabilités (si l'incertitude est trop élevée)
+                if U > 10:  # Seuil arbitraire pour l'exemple, à ajuster selon le besoin
+                    mauvaises_repe.append({
+                        'Race': race,
+                        'Observer': observer,
+                        'Mean Speed': mean_speed,
+                        'Uncertainty': U
+                    })
+            else:
+                results[observer]['Mean Speed'].append(np.nan)  # Ajouter un NaN si pas de données
+                results[observer]['Uncertainty'].append(np.nan)
+
+    # Création du DataFrame pour les résultats (bonnes et mauvaises répétabilités incluses)
+    df_results = pd.DataFrame({
+        'Race': course_labels,
+        **{f'Mean Speed {obs}': results[obs]['Mean Speed'] for obs in observateurs},
+        **{f'Uncertainty {obs}': results[obs]['Uncertainty'] for obs in observateurs}
+    })
+
+    # Afficher le tableau des résultats
+    st.write("### Tableau des résultats (toutes les répétabilités)")
+    st.write(df_results)
+
+    # Création du graphique des répétabilités
+    bar_width = 0.25
+    index = np.arange(len(course_labels))
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    for i, observer in enumerate(observateurs):
+        ax.bar(index + i * bar_width, df_results[f'Mean Speed {observer}'], bar_width, label=f'Mean Speed {observer}', yerr=df_results[f'Uncertainty {observer}'], capsize=5)
+
+    ax.set_xlabel('Course')
+    ax.set_ylabel('Mean Speed (km/h)')
+    ax.set_title('Mean Speed and Uncertainty by Observer and Course')
+    ax.set_xticks(index + bar_width / len(observateurs) * (len(observateurs) - 1))
+    ax.set_xticklabels(course_labels)
+    ax.legend()
+
+    plt.tight_layout()
+    st.pyplot(fig)
+
+    # Afficher le tableau des mauvaises répétabilités
+    if mauvaises_repe:
+        st.write("### Tableau des mauvaises répétabilités")
+        df_mauvaises_repe = pd.DataFrame(mauvaises_repe)
+        st.write(df_mauvaises_repe)
+
+
+# Function to color cells based on uncertainty
+def highlight_cells(val):
+    if pd.isna(val):
+        color = ''
+    elif val <= 10:
+        color = 'background-color: green'
+    elif 10 < val <= 30:
+        color = 'background-color: yellow'
+    else:
+        color = 'background-color: red'
+    return color
+
+
+def page_mesures_analyses_apres_etude():
+    st.title("Mesures et analyses - Répétabilité et Reproductibilité des vitesses")
+    data = charger_et_nettoyer_donnees_mesures_analyses('Falls data and analysis v2.csv')
+
+    data['Competition_Combined'] = data['Competition Name'] + ' ' + data['City'] + ' ' + data['Year'].astype(str)
+    competitions = data['Competition_Combined'].unique()
+    observateurs = ['Marie', 'Laurianne', 'Lisa']
+
+    rows_for_table = []
+
+    # Parcourir chaque compétition et course
+    for competition in competitions:
+        filtered_data = data[data['Competition_Combined'] == competition]
+        races = filtered_data['Race'].unique()
+
+        for race in races:
+            # Filtrer les données pour la course actuelle
+            course_data = filtered_data[filtered_data['Race'] == race]
+
+            # Calculer les résultats de répétabilité pour chaque observateur
+            results_repe = afficher_resultats_repe(course_data, observateurs)
+            
+            # Construire la ligne de tableau pour chaque course
+            row = {
+                'Competition': competition,
+                'Race': race
+            }
+
+            for obs in observateurs:
+                row[f"Mean Speed {obs}"] = results_repe[obs]["Moyenne des vitesses"]
+                row[f"Uncertainty {obs}"] = results_repe[obs]["U (Incertitude avec facteur de couverture t)"]
+
+            rows_for_table.append(row)
+
+    # Créer le DataFrame récapitulatif
+    df_results = pd.DataFrame(rows_for_table)
+
+    # Highlight cells based on uncertainty
+    def highlight_cells(value):
+        if pd.isna(value):
+            return 'background-color: gray'
+        elif value <= 10:
+            return 'background-color: green'
+        elif 10 < value <= 30:
+            return 'background-color: yellow'
+        else:
+            return 'background-color: red'
+
+    # Apply the color styling to the uncertainty columns
+    styled_df = df_results.style.applymap(highlight_cells, subset=[f'Uncertainty {obs}' for obs in observateurs])
+
+    st.write("### Tableau des résultats de répétabilité")
+    st.write(styled_df)
+
+    # Section pour le choix de la compétition, course et observateurs
+    choix_competition = st.selectbox('Choisissez une compétition:', competitions)
+    filtered_data = data[data['Competition_Combined'] == choix_competition]
+    races = filtered_data['Race'].unique()
+    choix_course = st.selectbox('Choisissez une course:', races)
+    selected_data = filtered_data[filtered_data['Race'] == choix_course]
+
+    selected_for_repe = st.multiselect('Choisissez les observateurs pour la répétabilité:', observateurs, default=observateurs)
+    if selected_for_repe:
+        results_repe = afficher_resultats_repe(selected_data, selected_for_repe)
+        st.write("### Résultats de répétabilité")
+        for observer, res in results_repe.items():
+            st.write(f"**{observer}:**")
+            st.write(f"Moyenne des vitesses: {res['Moyenne des vitesses']:.2f} km/h")
+            st.write(f"Écart type: {res['Écart type']:.2f}")
+            st.write(f"Erreur standard de la moyenne: {res['Erreur standard de la moyenne']:.2f}")
+            st.write(f"U (Incertitude avec facteur de couverture t): {res['U (Incertitude avec facteur de couverture t)']:.2f} km/h")
+
+    # Filtrer les données et afficher le nombre de mesures
+    tableau_filtre = filtrer_et_afficher_donnees(data)
+    st.write(tableau_filtre)
+    st.write("Nombre de vitesses d'impact mesurées :")
+    st.write(len(tableau_filtre))
+
+    # Section des valeurs uniques
+    unique_values = []
+    non_unique_data = data.copy()
+
+    for index, row in data.iterrows():
+        # Identifying unique measure for Marie
+        if pd.notna(row.get('Impact speed Marie m1')) and pd.isna(row.get('Impact speed Marie m2')) and pd.isna(row.get('Impact speed Marie m3')):
+            unique_value = row['Impact speed Marie m1']
+            mean_lisa = row.get('Impact speed mean Lisa')
+            mean_laurianne = row.get('Impact speed mean Laurianne')
+
+            if pd.notna(mean_lisa) and pd.notna(mean_laurianne):
+                diff_lisa = abs(unique_value - mean_lisa)
+                diff_laurianne = abs(unique_value - mean_laurianne)
+                unique_values.append({
+                    "Competition": row['Competition_Combined'],
+                    "Race": row['Race'],
+                    "Unique Marie": unique_value,
+                    "Mean Lisa": mean_lisa,
+                    "Mean Laurianne": mean_laurianne,
+                    "Diff Lisa": diff_lisa,
+                    "Diff Laurianne": diff_laurianne
+                })
+            
+            # Remove unique values from data used for other reproducibility calculations
+            non_unique_data.drop(index, inplace=True)
+
+    # Display the table with unique values and differences
+    if unique_values:
+        df_unique = pd.DataFrame(unique_values)
+        st.write("### Tableau des mesures uniques de Marie et écarts avec les moyennes")
+        st.write(df_unique)
+
+    # Calcul de la reproductibilité pour chaque course
+    rows_for_repro_table = []
+    for competition in competitions:
+        filtered_data = data[data['Competition_Combined'] == competition]
+        races = filtered_data['Race'].unique()
+
+        for race in races:
+            course_data = filtered_data[filtered_data['Race'] == race]
+            
+            # Vérifier les mesures uniques pour Marie
+            unique_mar_data = course_data[pd.notna(course_data['Impact speed Marie m1']) & 
+                                          pd.isna(course_data['Impact speed Marie m2']) & 
+                                          pd.isna(course_data['Impact speed Marie m3'])]
+
+            non_unique_data = course_data.drop(unique_mar_data.index)
+
+            row_repro = {
+                'Competition': competition,
+                'Race': race
+            }
+
+            # Calcul de la reproductibilité pour les valeurs non uniques
+            repro_non_unique = calculer_reproductibilite_non_uniques(non_unique_data, observateurs)
+            if repro_non_unique:
+                for obs, res in repro_non_unique.items():
+                    row_repro[f"Repro Mean {obs}"] = res["Global Mean Speed"]
+                    row_repro[f"Repro Std Dev {obs}"] = res["Standard Deviation"]
+                    row_repro[f"Repro U {obs}"] = res["Uncertainty"]
+
+            # Calcul de la reproductibilité pour les valeurs uniques de Marie
+            if not unique_mar_data.empty:
+                repro_unique = calculer_reproductibilite_uniques(unique_mar_data)
+                row_repro["Repro Unique Marie"] = repro_unique["Global Mean Diff"]
+
+            rows_for_repro_table.append(row_repro)
+
+    # Créer le DataFrame récapitulatif de la reproductibilité
+    df_repro_results = pd.DataFrame(rows_for_repro_table)
+
+
+    # Appel de la méthode de calcul
+    df_global_repro = calculer_reproductibilite_globale(data, observateurs)
+
+    # Affichage du tableau des reproductibilités globales
+    st.write("### Tableau récapitulatif des reproductibilités globales")
+    st.write(df_global_repro)
+
+
+
+def afficher_resultats_repe(data, observateurs):
+    results = {}
+    for obs in observateurs:
+        cols = [col for col in data.columns if f'Impact speed {obs}' in col]
+        speed_measurements = data[cols].values.flatten()
+        mean_speed, S, Sbarre, U, df, t_value = calculer_repetabilite_mesures_analyses(speed_measurements)
+        results[obs] = {
+            "Moyenne des vitesses": mean_speed,
+            "Écart type": S,
+            "Erreur standard de la moyenne": Sbarre,
+            "U (Incertitude avec facteur de couverture t)": U,
+            "Degrés de liberté": df,
+            "Valeur t": t_value
+        }
+    return results
+
+def calculer_reproductibilite_non_uniques(data, observateurs):
+    vitesses = {}
+    for obs in observateurs:
+        obs_data = []
+        for i in range(1, 4):  # Assuming up to 3 measurements
+            col_name = f"Impact speed {obs} m{i}"
+            if col_name in data.columns:
+                obs_data.extend(data[col_name].dropna().values)
+        
+        if obs_data:
+            vitesses[obs] = np.array(obs_data)
+
+    repro_results = {}
+    if len(vitesses) >= 2:
+        # Calculer la reproductibilité pour chaque observateur
+        for obs, speeds in vitesses.items():
+            mean_speed = np.mean(speeds)
+            std_dev = np.std(speeds)
+            uncertainty = 2 * std_dev  # Exemple pour U (ajuster si nécessaire)
+
+            repro_results[obs] = {
+                "Global Mean Speed": mean_speed,
+                "Standard Deviation": std_dev,
+                "Uncertainty": uncertainty
+            }
+    return repro_results
+
+def calculer_reproductibilite_uniques(unique_mar_data):
+    # Calculer la reproductibilité des valeurs uniques de Marie
+    diffs = unique_mar_data['Impact speed Marie m1'].values
+    mean_diff = np.mean(diffs)
+    return {
+        "Global Mean Diff": mean_diff
+    }
+
+def calculer_reproductibilite_globale(data, observateurs):
+    # Regrouper toutes les mesures pour chaque course
+    rows_for_global_repro = []
+    
+    for competition in data['Competition_Combined'].unique():
+        filtered_data = data[data['Competition_Combined'] == competition]
+        races = filtered_data['Race'].unique()
+        
+        for race in races:
+            # Combiner toutes les mesures des observateurs pour la course
+            course_data = filtered_data[filtered_data['Race'] == race]
+            all_speeds = []
+            unique_marie_speed = None
+
+            for obs in observateurs:
+                for i in range(1, 4):  # Supposant qu'il y a jusqu'à 3 mesures par observateur
+                    col_name = f'Impact speed {obs} m{i}'
+                    if col_name in course_data.columns:
+                        speeds = course_data[col_name].dropna().values
+                        all_speeds.extend(speeds)
+                        
+                        # Vérifier si Marie a une seule mesure unique
+                        if obs == 'Marie' and len(speeds) == 1:
+                            unique_marie_speed = speeds[0]
+            
+            # Calculer la moyenne et l'écart-type globaux
+            if len(all_speeds) > 1:  # Assurez-vous d'avoir au moins deux mesures
+                mean_global = np.mean(all_speeds)
+                std_dev_global = np.std(all_speeds, ddof=1)  # ddof=1 pour un échantillon
+                
+                # Calcul de l'incertitude élargie
+                U_global = std_dev_global * 2  # Facteur de couverture (2 pour 95%)
+                
+                # Si une valeur unique de Marie a été trouvée, estimer un écart type spécifique
+                if unique_marie_speed is not None:
+                    # Estimer l'écart-type en utilisant la différence entre la valeur unique de Marie et la moyenne globale
+                    estimated_std_dev_marie = abs(unique_marie_speed - mean_global)
+                else:
+                    estimated_std_dev_marie = np.nan
+                
+                # Ajouter les résultats au tableau
+                rows_for_global_repro.append({
+                    'Competition': competition,
+                    'Race': race,
+                    'Global Mean Speed': mean_global,
+                    'Global Std Dev': std_dev_global,
+                    'Global U': U_global,
+                    'Estimated Std Dev Marie': estimated_std_dev_marie
+                })
+    
+    # Créer un DataFrame des résultats globaux
+    df_global_repro = pd.DataFrame(rows_for_global_repro)
+    
+    return df_global_repro
+
+def calculer_reproductibilite_globale(data, observateurs):
+    # Regrouper toutes les mesures pour chaque course
+    rows_for_global_repro = []
+    
+    for competition in data['Competition_Combined'].unique():
+        filtered_data = data[data['Competition_Combined'] == competition]
+        races = filtered_data['Race'].unique()
+        
+        for race in races:
+            # Combiner toutes les mesures des observateurs pour la course
+            course_data = filtered_data[filtered_data['Race'] == race]
+            all_speeds = []
+            speeds_by_observer = {}
+            unique_marie_speed = None
+
+            for obs in observateurs:
+                speeds_by_observer[obs] = []  # Initialize the list for each observer
+                for i in range(1, 4):  # Supposant qu'il y a jusqu'à 3 mesures par observateur
+                    col_name = f'Impact speed {obs} m{i}'
+                    if col_name in course_data.columns:
+                        speeds = course_data[col_name].dropna().values
+                        all_speeds.extend(speeds)
+                        speeds_by_observer[obs].extend(speeds)
+                        
+                        # Vérifier si Marie a une seule mesure unique
+                        if obs == 'Marie' and len(speeds) == 1:
+                            unique_marie_speed = speeds[0]
+            
+            # Calculer la moyenne et l'écart-type globaux
+            if len(all_speeds) > 1:  # Assurez-vous d'avoir au moins deux mesures
+                mean_global = np.mean(all_speeds)
+                std_dev_global = np.std(all_speeds, ddof=1)  # ddof=1 pour un échantillon
+                
+                # Calcul de l'écart-type de répétabilité (Sr) et reproductibilité (SR)
+                std_devs = [np.std(speeds, ddof=1) for speeds in speeds_by_observer.values() if len(speeds) > 1]
+                Sr = np.mean(std_devs) if std_devs else np.nan
+                SR = std_dev_global
+                
+                # Calcul de l'incertitude élargie
+                U_global = SR * 2  # Facteur de couverture (2 pour 95%)
+                
+                # Si une valeur unique de Marie a été trouvée, estimer un écart type spécifique
+                if unique_marie_speed is not None:
+                    # Estimer l'écart-type en utilisant la différence entre la valeur unique de Marie et la moyenne globale
+                    estimated_std_dev_marie = abs(unique_marie_speed - mean_global)
+                else:
+                    estimated_std_dev_marie = np.nan
+                
+                # Ajouter les résultats au tableau
+                rows_for_global_repro.append({
+                    'Competition': competition,
+                    'Race': race,
+                    'Global Mean Speed': mean_global,
+                    'Global Std Dev': std_dev_global,
+                    'Global U': U_global,
+                    'Estimated Std Dev Marie': estimated_std_dev_marie,
+                    'Repeatability Std Dev (Sr)': Sr,
+                    'Reproducibility Std Dev (SR)': SR
+                })
+    
+    # Créer un DataFrame des résultats globaux
+    df_global_repro = pd.DataFrame(rows_for_global_repro)
+    
+    return df_global_repro
+
+
+def extraire_vitesses_maximales_et_moyennes(data):
+    # Création de deux séries pour les vitesses maximales et les moyennes maximales
+    max_speeds = pd.Series(dtype=float)
+    mean_max_speeds = pd.Series(dtype=float)
+    
+    for col in data.columns:
+        if 'Impact speed' in col and 'mean' not in col:
+            max_speed = data.groupby('Head area')[col].max()
+            max_speeds = pd.concat([max_speeds, max_speed.rename(col)], axis=1)
+        elif 'Impact speed mean' in col:
+            mean_speed = data.groupby('Head area')[col].max()
+            mean_max_speeds = pd.concat([mean_max_speeds, mean_speed.rename(col)], axis=1)
+    
+    # Combinaison des deux séries en un seul DataFrame et exclusion des zones non pertinentes
+    combined_speeds = pd.DataFrame({
+        'Max Speed': max_speeds.max(axis=1),
+        'Max Mean Speed': mean_max_speeds.max(axis=1)
+    }).drop(index=['None', 'No data'])  # Exclure 'None' et 'No data'
+
+    return combined_speeds
+
+def plot_max_speeds(combined_speeds, title, ylabel):
+    ax = combined_speeds.plot(kind='bar', figsize=(12, 6))
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xlabel('Head Area')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(plt.gcf())
     
 # =============================================================================
 # MENU DU STREAMLIT
@@ -1455,7 +1973,7 @@ st.sidebar.markdown(
 st.sidebar.title("Menu")  # Layout the sidebar
 page = st.sidebar.radio(
     "Choisissez une page",
-    ["Accueil", "Statistiques", "Mesures et analyses", "Validation des valeurs de Kinovéa"],
+    ["Accueil", "Statistiques", "Mesures avant l'étude de la méthode de mesure", "Validation des valeurs de Kinovéa", "Mesures après l'étude de la méthode de mesure"],
     index=0,
     key='page_select'
 )
@@ -1464,8 +1982,9 @@ page = st.sidebar.radio(
 pages = {
     "Accueil": page_home,
     "Statistiques": page_statistiques,
-    "Mesures et analyses": page_mesures_analyses,
-    "Validation des valeurs de Kinovéa": page_validation_kinovea
+    "Mesures avant l'étude de la méthode de mesure": page_mesures_analyses,
+    "Validation des valeurs de Kinovéa": page_validation_kinovea,
+    "Mesures après l'étude de la méthode de mesure": page_mesures_analyses_apres_etude
 }
 
 # Call the app function associated with the selected page
@@ -1481,7 +2000,10 @@ def show():
     st.title("Statistiques")
 
 def show():
-    st.title("Mesures et analyses")
+    st.title("Mesures avant l'étude de la méthode de mesure")
 
 def show():
     st.title("Validation des valeurs de Kinovéa")
+
+def show():
+    st.title("Mesures après l'étude de la méthode de mesure")
